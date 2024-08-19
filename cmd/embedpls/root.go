@@ -1,6 +1,16 @@
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"context"
+
+	"github.com/conneroisu/embedpls/internal/rpc"
+	"github.com/spf13/cobra"
+)
+
+// Handler is an interface for handling messages from the client to the server.
+type Handler interface {
+	Handle(ctx context.Context, msg *rpc.BaseMessage, writer *rpc.Writer) error
+}
 
 // main is the entry point for the application.
 func main() {
@@ -24,7 +34,7 @@ func run() error {
 func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "embedpls",
-		Short: "EmbedPLS is a tool for embedding PL/SQL code into a Go application",
+		Short: "EmbedPLS is cli based langauage server for the go std-lib embed package.",
 	}
 	rootCmd.AddCommand(NewLspCmd())
 	rootCmd.AddCommand(NewVersionCmd())

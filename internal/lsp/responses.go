@@ -1,9 +1,6 @@
 package lsp
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/conneroisu/embedpls/internal/lsp/methods"
 	"go.lsp.dev/protocol"
 )
@@ -76,67 +73,57 @@ func (r InitializeResponse) Method() methods.Method {
 
 // NewInitializeResponse creates a new initialize response.
 func NewInitializeResponse(
-	ctx context.Context,
 	request *InitializeRequest,
-) (*InitializeResponse, error) {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
-		default:
-			return &InitializeResponse{
-				Response: Response{
-					RPC: RPCVersion,
-					ID:  request.ID,
-				},
-				Result: protocol.InitializeResult{
-					Capabilities: protocol.ServerCapabilities{
-						TextDocumentSync: protocol.TextDocumentSyncOptions{
-							OpenClose: true,
-							Change:    protocol.TextDocumentSyncKindFull,
-							WillSave:  true,
-							Save: &protocol.SaveOptions{
-								IncludeText: true,
-							},
-						},
-						CompletionProvider: &protocol.CompletionOptions{
-							TriggerCharacters: []string{":"},
-						},
-						HoverProvider:                    true,
-						SignatureHelpProvider:            &protocol.SignatureHelpOptions{},
-						DeclarationProvider:              false,
-						DefinitionProvider:               false,
-						TypeDefinitionProvider:           false,
-						ImplementationProvider:           false,
-						ReferencesProvider:               false,
-						DocumentHighlightProvider:        false,
-						DocumentSymbolProvider:           false,
-						CodeActionProvider:               false,
-						ColorProvider:                    false,
-						WorkspaceSymbolProvider:          false,
-						DocumentFormattingProvider:       false,
-						DocumentRangeFormattingProvider:  false,
-						RenameProvider:                   false,
-						FoldingRangeProvider:             false,
-						SelectionRangeProvider:           false,
-						CallHierarchyProvider:            false,
-						LinkedEditingRangeProvider:       false,
-						SemanticTokensProvider:           false,
-						MonikerProvider:                  false,
-						Experimental:                     false,
-						CodeLensProvider:                 nil,
-						DocumentLinkProvider:             nil,
-						DocumentOnTypeFormattingProvider: nil,
-						ExecuteCommandProvider:           nil,
-						Workspace:                        nil,
-					},
-					ServerInfo: &protocol.ServerInfo{
-						Name:    "seltabl_lsp",
-						Version: "0.1.0.5.0.0-beta1.final",
+) *InitializeResponse {
+	return &InitializeResponse{
+		Response: Response{
+			RPC: RPCVersion,
+			ID:  request.ID,
+		},
+		Result: protocol.InitializeResult{
+			Capabilities: protocol.ServerCapabilities{
+				TextDocumentSync: protocol.TextDocumentSyncOptions{
+					OpenClose: true,
+					Change:    protocol.TextDocumentSyncKindFull,
+					WillSave:  true,
+					Save: &protocol.SaveOptions{
+						IncludeText: true,
 					},
 				},
-			}, nil
-		}
+				CompletionProvider:               &protocol.CompletionOptions{},
+				HoverProvider:                    true,
+				SignatureHelpProvider:            &protocol.SignatureHelpOptions{},
+				DeclarationProvider:              false,
+				DefinitionProvider:               true,
+				TypeDefinitionProvider:           false,
+				ImplementationProvider:           false,
+				ReferencesProvider:               false,
+				DocumentHighlightProvider:        false,
+				DocumentSymbolProvider:           false,
+				CodeActionProvider:               false,
+				ColorProvider:                    false,
+				WorkspaceSymbolProvider:          false,
+				DocumentFormattingProvider:       false,
+				DocumentRangeFormattingProvider:  false,
+				RenameProvider:                   false,
+				FoldingRangeProvider:             false,
+				SelectionRangeProvider:           false,
+				CallHierarchyProvider:            false,
+				LinkedEditingRangeProvider:       false,
+				SemanticTokensProvider:           false,
+				MonikerProvider:                  false,
+				Experimental:                     false,
+				CodeLensProvider:                 nil,
+				DocumentLinkProvider:             nil,
+				DocumentOnTypeFormattingProvider: nil,
+				ExecuteCommandProvider:           nil,
+				Workspace:                        nil,
+			},
+			ServerInfo: &protocol.ServerInfo{
+				Name:    "seltabl_lsp",
+				Version: "0.1.0.5.0.0-beta1.final",
+			},
+		},
 	}
 }
 
