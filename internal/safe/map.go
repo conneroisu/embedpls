@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/caarlos0/log"
+	"github.com/charmbracelet/log"
 )
 
 // Map is a thread-safe map.
