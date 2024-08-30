@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/conneroisu/embedpls/internal/lsp"
@@ -44,6 +45,8 @@ func (l *lspHandler) Handle(
 ) (rpc.MethodActor, error) {
 	errCh := make(chan error)
 	resultCh := make(chan rpc.MethodActor)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+	defer cancel()
 	go func() {
 		result, err := l.handle(ctx, msg)
 		if err == nil {
@@ -53,30 +56,19 @@ func (l *lspHandler) Handle(
 		errCh <- err
 	}()
 	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	case err := <-errCh:
 		return nil, err
 	case result := <-resultCh:
 		return result, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
 	}
-}
-
-func decode[
-	T lsp.InitializeRequest | lsp.NotificationDidOpenTextDocument | lsp.TextDocumentCompletionRequest | lsp.HoverRequest | lsp.TextDocumentCodeActionRequest | lsp.ShutdownRequest | lsp.CancelRequest | lsp.DidSaveTextDocumentNotification | lsp.DidCloseTextDocumentParamsNotification | lsp.TextDocumentDidChangeNotification,
-](msg *rpc.BaseMessage) (T, error) {
-	var request T
-	err := json.Unmarshal([]byte(msg.Content), &request)
-	if err != nil {
-		return request, fmt.Errorf("decode (%s) failed: %w", msg.Method, err)
-	}
-	return request, nil
 }
 
 func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.MethodActor, error) {
 	switch methods.Method(msg.Method) {
 	case methods.MethodCancelRequest:
-		request, err := decode[lsp.CancelRequest](msg)
+		request, err := rpc.Decode[lsp.CancelRequest](msg)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +115,7 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		return nil, nil
 
 	case methods.MethodNotificationTextDocumentDidSave:
-		request, err := decode[lsp.DidSaveTextDocumentNotification](msg)
+		request, err := rpc.Decode[lsp.DidSaveTextDocumentNotification](msg)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +127,7 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		return nil, nil
 
 	case methods.MethodShutdown:
-		request, err := decode[lsp.ShutdownRequest](msg)
+		request, err := rpc.Decode[lsp.ShutdownRequest](msg)
 		if err != nil {
 			return nil, err
 		}
@@ -158,81 +150,81 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		return nil, nil
 
 	case methods.MethodInitialize:
-		request, err := decode[lsp.InitializeRequest](msg)
+		request, err := rpc.Decode[lsp.InitializeRequest](msg)
 		if err != nil {
 			return nil, err
 		}
 		return lsp.NewInitializeResponse(&request), nil
 
 	case methods.MethodRequestTextDocumentDidOpen:
-		request, err := decode[lsp.NotificationDidOpenTextDocument](msg)
+		request, err := rpc.Decode[lsp.NotificationDidOpenTextDocument](msg)
 		if err != nil {
 			return nil, err
 		}
-		return l.handleOpenDocument(
-			ctx,
-			&request,
-		)
+		if !strings.HasSuffix(
+			string(request.Params.TextDocument.URI),
+			".go",
+		) {
+			return nil, nil
+		}
+		l.documents.Set(request.Params.TextDocument.URI, string(request.Params.TextDocument.Text))
+		return nil, nil
 
 	case methods.MethodRequestTextDocumentDefinition:
-		request, err := decode[lsp.TextDocumentCompletionRequest](msg)
+		request, err := rpc.Decode[lsp.TextDocumentCompletionRequest](msg)
 		if err != nil {
 			return nil, err
 		}
-		return l.handleTextDocumentDefinition(
+		ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+		defer cancel()
+		ans, err := l.handleTextDocumentDefinition(
 			ctx,
 			request,
 		)
+		return ans, err
 
 	case methods.MethodRequestTextDocumentCompletion:
-		request, err := decode[lsp.TextDocumentCompletionRequest](msg)
+		request, err := rpc.Decode[lsp.TextDocumentCompletionRequest](msg)
 		if err != nil {
 			return nil, err
 		}
-		return l.handleTextDocumentCompletion(
+		ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+		defer cancel()
+		ans, err := l.handleTextDocumentCompletion(
 			ctx,
 			request,
 		)
+		return ans, err
 
 	case methods.MethodRequestTextDocumentHover:
-		request, err := decode[lsp.HoverRequest](msg)
+		request, err := rpc.Decode[lsp.HoverRequest](msg)
 		if err != nil {
 			return nil, err
 		}
-		return l.handleTextDocumentHover(
+		ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+		defer cancel()
+		ans, err := l.handleTextDocumentHover(
 			ctx,
 			request,
 		)
+		return ans, err
 
 	case methods.MethodRequestTextDocumentCodeAction:
-		request, err := decode[lsp.TextDocumentCodeActionRequest](msg)
+		request, err := rpc.Decode[lsp.TextDocumentCodeActionRequest](msg)
 		if err != nil {
 			return nil, err
 		}
-		return l.handleTextDocumentCodeAction(
+		ctx, cancel := context.WithTimeout(ctx, time.Second*1)
+		defer cancel()
+		ans, err := l.handleTextDocumentCodeAction(
 			ctx,
 			request,
 		)
+		return ans, err
 
 	default:
 		return nil, fmt.Errorf("unknown method: %s", msg.Method)
 	}
-}
-
-//
-
-func (l *lspHandler) handleOpenDocument(
-	_ context.Context,
-	request *lsp.NotificationDidOpenTextDocument,
-) (rpc.MethodActor, error) {
-	if !strings.HasSuffix(
-		string(request.Params.TextDocument.URI),
-		".go",
-	) {
-		return nil, nil
-	}
-	l.documents.Set(request.Params.TextDocument.URI, string(request.Params.TextDocument.Text))
-	return nil, nil
 }
 
 // TODO: Implement Below This Line
@@ -288,15 +280,25 @@ func (l *lspHandler) handleTextDocumentHover(
 	ctx context.Context,
 	request lsp.HoverRequest,
 ) (rpc.MethodActor, error) {
-	return &lsp.HoverResponse{
+	resp := &lsp.HoverResponse{
 		Response: lsp.Response{
 			RPC: lsp.RPCVersion,
 			ID:  request.ID,
 		},
-		Result: lsp.HoverResult{
-			Contents: "Hello, world!",
-		},
-	}, nil
+	}
+	resp.Result = lsp.HoverResult{
+		Contents: "Hello, world!",
+	}
+	errCh := make(chan error)
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+	case res := <-l.getHoverResp(request, errCh):
+		resp.Result = res
+		return resp, nil
+	case err := <-errCh:
+		return nil, err
+	}
 }
 
 //
