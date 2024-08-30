@@ -9,10 +9,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/conneroisu/embedpls/internal/lsp"
 	"github.com/conneroisu/embedpls/internal/lsp/methods"
+	"github.com/conneroisu/embedpls/internal/parsers"
 	"github.com/conneroisu/embedpls/internal/rpc"
 	"github.com/conneroisu/embedpls/internal/safe"
+	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 
@@ -84,7 +87,7 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 				err,
 			)
 		}
-		c, ok := l.cancelMap.Get(int(request.Params.ID.(float64)))
+		c, ok := l.cancelMap.Get(id)
 		if ok {
 			(*c)()
 		}
@@ -238,6 +241,44 @@ func (l *lspHandler) handleTextDocumentCompletion(
 	ctx context.Context,
 	request lsp.TextDocumentCompletionRequest,
 ) (rpc.MethodActor, error) {
+	doc, ok := l.documents.Get(request.Params.TextDocument.URI)
+	if !ok {
+		return nil, fmt.Errorf("document not found")
+	}
+	curVal, state, err := parsers.ParseSourcePosition(
+		doc,
+		request.Params.Position,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if state == parsers.StateUnknown {
+		log.Debugf("unknown state")
+		return nil, nil
+	}
+	errCh := make(chan error)
+	select {
+	case <-ctx.Done():
+		return nil, fmt.Errorf("context cancelled: %w", ctx.Err())
+	case embeds := <-getEmbbeddables(request.Params.TextDocument.URI, curVal, errCh):
+		resp := &lsp.TextDocumentCompletionResponse{
+			Response: lsp.Response{
+				RPC: lsp.RPCVersion,
+				ID:  request.ID,
+			},
+			Result: []protocol.CompletionItem{},
+		}
+		for _, embed := range embeds.embeddables {
+			resp.Result = append(resp.Result, protocol.CompletionItem{
+				Label:         embed.name,
+				Detail:        embed.name,
+				Documentation: embed.name,
+				Kind:          protocol.CompletionItemKindFile,
+			})
+		}
+	case err := <-errCh:
+		return nil, err
+	}
 	return nil, nil
 }
 

@@ -67,17 +67,21 @@ PowerShell:
 				if err != nil {
 					log.Fatalf("error generating bash completion: %v", err)
 				}
+
 			case "zsh":
 				err := cmd.Root().GenZshCompletion(os.Stdout)
 				if err != nil {
 					log.Fatalf("error generating zsh completion: %v", err)
 				}
+
 			case "fish":
 				err := cmd.Root().GenFishCompletion(os.Stdout, true)
 				if err != nil {
 					log.Fatalf("error generating fish completion: %v", err)
 				}
+
 			case "powershell":
+
 				err := cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
 				if err != nil {
 					log.Fatalf(

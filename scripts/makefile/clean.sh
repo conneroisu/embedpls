@@ -1,6 +1,5 @@
 #!/bin/bash
 # file: makefile.clean.sh
-# url: https://github.com/conneroisu/seltab/tools/seltab-lsp/scripts/makefile.clean.sh
 # title: Cleaning Script
 # description: This script cleans the project
 

@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"go.lsp.dev/protocol"
 )
 
@@ -12,7 +13,9 @@ import (
 type State int
 
 const (
+	// StateUnknown is the state for an unknown position.
 	StateUnknown State = iota
+	// StateInComment is the state for a position in a comment.
 	StateInComment
 )
 
@@ -30,24 +33,13 @@ func ParseSourcePosition(
 	}
 	// split the source string into lines
 	lines := strings.Split(*source, "\n")
-	line := lines[position.Line-1]
+	line := lines[position.Line]
+	log.Debugf("current line: %s", line)
 	if len(line) == 0 {
 		return "", StateUnknown, nil
 	}
-	// check if the line is a comment
-	if strings.HasPrefix(line, "//") {
-		filepath := embedRegex.FindStringSubmatch(line)
-		if len(filepath) > 1 && filepath[1] != "" {
-			return filepath[1], StateInComment, nil
-		}
-		return "", StateInComment, nil
-	}
-	// check if the line is a comment with a star
-	if strings.HasPrefix(line, "/*") {
-		filepath := embedRegex.FindStringSubmatch(line)
-		if len(filepath) > 2 && filepath[2] != "" {
-			return filepath[2], StateInComment, nil
-		}
+	if strings.HasPrefix(line, "//g") {
+		log.Debugf("found //go")
 		return "", StateInComment, nil
 	}
 	return "", StateUnknown, nil

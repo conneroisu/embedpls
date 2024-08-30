@@ -1,6 +1,5 @@
 #!/bin/bash
 # file: taskfile/coverage.sh
-# url: https://github.com/conneroisu/seltab/tools/seltab-lsp/scripts/taskfile.coverage.sh
 # title: Running GoCovSh
 # description: This script runs gocovsh to generate a coverage report.
 #

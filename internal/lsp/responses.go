@@ -24,10 +24,14 @@ func ParseCancelParams(params protocol.CancelParams) (int, error) {
 	if ok {
 		return int(v), nil
 	}
+	v3, ok := id.(float64)
+	if ok {
+		return int(v3), nil
+	}
 	v2, ok := id.(string)
 	converted, err := strconv.Atoi(v2)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to parse cancel params(%s): %w", id, err)
 	}
 	if ok {
 		return converted, nil
@@ -141,7 +145,7 @@ func NewInitializeResponse(
 				Workspace:                        nil,
 			},
 			ServerInfo: &protocol.ServerInfo{
-				Name:    "seltabl_lsp",
+				Name:    "embedpls",
 				Version: "0.1.0.5.0.0-beta1.final",
 			},
 		},

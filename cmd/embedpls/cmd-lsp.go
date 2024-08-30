@@ -61,7 +61,7 @@ func NewLspCmd(
 				)
 				if err != nil {
 					log.Errorf(
-						"failed to decode message: %s",
+						"failed to handle message: %s",
 						err,
 					)
 					continue

@@ -1,6 +1,5 @@
 #!/bin/bash
 # file: taskfile.clean.sh
-# url: https://github.com/conneroisu/seltab/tools/seltab-lsp/scripts/taskfile.clean.sh
 # title: Cleaning Script
 # description: This script cleans the project
 

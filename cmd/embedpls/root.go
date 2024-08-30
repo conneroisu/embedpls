@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/log"
 	"github.com/conneroisu/embedpls/internal/server"
 	"github.com/spf13/cobra"
 )
 
 // main is the entry point for the application.
 func main() {
+	log.SetLevel(log.DebugLevel)
+	log.SetReportCaller(true)
 	err := run()
 	if err != nil {
 		fmt.Println(err)
