@@ -280,15 +280,11 @@ func (l *lspHandler) handleTextDocumentHover(
 	ctx context.Context,
 	request lsp.HoverRequest,
 ) (rpc.MethodActor, error) {
-	resp := &lsp.HoverResponse{
+	resp := lsp.HoverResponse{
 		Response: lsp.Response{
 			RPC: lsp.RPCVersion,
 			ID:  request.ID,
-		},
-	}
-	resp.Result = lsp.HoverResult{
-		Contents: "Hello, world!",
-	}
+		}}
 	errCh := make(chan error)
 	select {
 	case <-ctx.Done():

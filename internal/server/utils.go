@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/conneroisu/embedpls/internal/lsp"
 	"github.com/conneroisu/embedpls/internal/parsers"
 	"go.lsp.dev/uri"
@@ -74,14 +75,8 @@ func (l *lspHandler) getHoverResp(req lsp.HoverRequest, errCh chan<- error) <-ch
 			errCh <- err
 			return
 		}
-		respCh <- lsp.HoverResponse{
-			Response: lsp.Response{
-				RPC: lsp.RPCVersion,
-				ID:  1,
-			},
-			Result: lsp.HoverResult{
-				Contents: content,
-			},
+		respCh <- lsp.HoverResult{
+			Contents: content,
 		}
 	}()
 	return respCh
@@ -102,6 +97,8 @@ func relativeReadFile(uri uri.URI, embedPath string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("error reading file: %w", err)
 			}
+			log.Debugf("found file: %s", entry.Name())
+			log.Debugf("file content: %s", string(data))
 			return string(data), nil
 		}
 	}

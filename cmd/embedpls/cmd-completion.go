@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	_ "embed"
+
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
