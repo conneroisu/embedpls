@@ -1,6 +1,9 @@
 package lsp
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/conneroisu/embedpls/internal/lsp/methods"
 	"go.lsp.dev/protocol"
 )
@@ -12,6 +15,24 @@ import (
 type CancelResponse struct {
 	RPC string `json:"jsonrpc"`
 	ID  int    `json:"id"`
+}
+
+// ParseCancelParams parses the CancelParams and returns the ID as an int.
+func ParseCancelParams(params protocol.CancelParams) (int, error) {
+	id := params.ID
+	v, ok := id.(int32)
+	if ok {
+		return int(v), nil
+	}
+	v2, ok := id.(string)
+	converted, err := strconv.Atoi(v2)
+	if err != nil {
+		return 0, err
+	}
+	if ok {
+		return converted, nil
+	}
+	return 0, fmt.Errorf("invalid id type: %T", id)
 }
 
 // Method returns the method for the cancel response

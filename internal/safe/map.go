@@ -75,3 +75,13 @@ func limitString(s string, limit int) string {
 	}
 	return s
 }
+
+func (sm *Map[K, V]) Values() []V {
+	sm.mu.RLock()
+	defer sm.mu.RUnlock()
+	var values []V
+	for _, v := range sm.m {
+		values = append(values, v)
+	}
+	return values
+}

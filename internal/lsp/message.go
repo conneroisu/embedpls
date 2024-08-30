@@ -1,16 +1,8 @@
 package lsp
 
 import (
-	"context"
-
 	"github.com/conneroisu/embedpls/internal/lsp/methods"
-	"github.com/conneroisu/embedpls/internal/safe"
 	"go.lsp.dev/protocol"
-)
-
-var (
-	// CancelMap is a map of cancel functions
-	CancelMap = safe.NewSafeMap[int, context.CancelFunc]()
 )
 
 // Request is the request to a LSP

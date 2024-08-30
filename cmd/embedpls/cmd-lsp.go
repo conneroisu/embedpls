@@ -12,30 +12,22 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/conneroisu/embedpls/internal/rpc"
 	"github.com/conneroisu/embedpls/internal/safe"
+	"github.com/conneroisu/embedpls/internal/server"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"go.lsp.dev/uri"
 )
 
-// LSPHandler is a struct for the LSP server
-type LSPHandler func(
-	ctx context.Context,
-	cancel *context.CancelFunc, // cancel is a pointer to the cancel function to avoid copying
-	msg *rpc.BaseMessage, // msg is a pointer to the message to avoid copying
-	documents *safe.Map[uri.URI, string],
-) (rpc.MethodActor, error)
-
 // NewLspCmd creates a new lsp command.
 func NewLspCmd(
-	ctx context.Context,
 	reader io.Reader,
 	writer io.Writer,
-	handle LSPHandler,
+	handle func(documents *safe.Map[uri.URI, string]) server.Handler,
 ) *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "lsp",
 		Short: "Starts the LSP server.",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			configPath, err := CreateConfigDir("~/.config/embedpls/")
 			if err != nil {
 				return fmt.Errorf("failed to create config directory: %w", err)
@@ -51,21 +43,21 @@ func NewLspCmd(
 			}
 			log.SetOutput(f)
 			log.SetLevel(log.DebugLevel)
-			documents := safe.NewSafeMap[uri.URI, string]()
 			scanner := bufio.NewScanner(reader)
-			scanner.Split(rpc.Split)
 			rpcWriter := rpc.NewWriter(writer)
 			innerCtx, cancel := context.WithCancel(cmd.Context())
+			documents := safe.NewSafeMap[uri.URI, string]()
+			handler := handle(documents)
+			defer cancel()
+			scanner.Split(rpc.Split)
 			for scanner.Scan() {
 				decoded, err := rpc.DecodeMessage(scanner.Bytes())
 				if err != nil {
 					return err
 				}
-				resp, err := handle(
+				resp, err := handler.Handle(
 					innerCtx,
-					&cancel,
 					decoded,
-					documents,
 				)
 				if err != nil {
 					log.Errorf(
@@ -88,7 +80,6 @@ func NewLspCmd(
 			return nil
 		},
 	}
-	cmd.SetContext(ctx)
 	return &cmd
 }
 
