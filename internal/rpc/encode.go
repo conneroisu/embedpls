@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/log"
+	"github.com/conneroisu/embedpls/internal/lsp"
 	"github.com/conneroisu/embedpls/internal/lsp/methods"
 )
 
@@ -55,4 +56,16 @@ func Encode(
 		)
 		return result, nil
 	}
+}
+
+// Decode decodes a message into lsp request.
+func Decode[
+	T lsp.InitializeRequest | lsp.NotificationDidOpenTextDocument | lsp.TextDocumentCompletionRequest | lsp.HoverRequest | lsp.TextDocumentCodeActionRequest | lsp.ShutdownRequest | lsp.CancelRequest | lsp.DidSaveTextDocumentNotification | lsp.DidCloseTextDocumentParamsNotification | lsp.TextDocumentDidChangeNotification,
+](msg *BaseMessage) (T, error) {
+	var request T
+	err := json.Unmarshal([]byte(msg.Content), &request)
+	if err != nil {
+		return request, fmt.Errorf("decode (%s) failed: %w", msg.Method, err)
+	}
+	return request, nil
 }
