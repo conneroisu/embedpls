@@ -2,8 +2,11 @@ package safe
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
+
+	"github.com/caarlos0/log"
 )
 
 // Map is a thread-safe map.
@@ -21,6 +24,7 @@ func NewSafeMap[K comparable, V any]() *Map[K, V] {
 
 // Get returns the value for the given key.
 func (sm *Map[K, V]) Get(key K) (*V, bool) {
+	log.Debugf("getting value for key: %v", key)
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 	val, ok := sm.m[key]
@@ -29,6 +33,7 @@ func (sm *Map[K, V]) Get(key K) (*V, bool) {
 
 // Set sets the value for the given key.
 func (sm *Map[K, V]) Set(key K, value V) {
+	log.Debugf("setting value (%s) for key: %v", reflect.TypeOf(value), key)
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	sm.m[key] = value
@@ -36,6 +41,7 @@ func (sm *Map[K, V]) Set(key K, value V) {
 
 // Delete deletes the value for the given key.
 func (sm *Map[K, V]) Delete(key K) {
+	log.Debugf("deleting value (%s) for key: %v", reflect.TypeOf(sm.m), key)
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	delete(sm.m, key)
@@ -50,6 +56,7 @@ func (sm *Map[K, V]) Len() int {
 
 // Clear clears the map.
 func (sm *Map[K, V]) Clear() {
+	log.Debugf("clearing map over type: %s", reflect.TypeOf(sm.m))
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	sm.m = make(map[K]V)
@@ -76,6 +83,7 @@ func limitString(s string, limit int) string {
 	return s
 }
 
+// Values returns the values of the map.
 func (sm *Map[K, V]) Values() []V {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()

@@ -237,7 +237,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 				err,
 			)
 		}
-		return l.handleTextDocumentDidClose(ctx, request)
+		l.documents.Delete(request.Params.TextDocument.URI)
+		return nil, nil
 
 	case methods.NotificationMethodTextDocumentDidChange:
 		var request lsp.TextDocumentDidChangeNotification
@@ -249,10 +250,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 				err,
 			)
 		}
-		return l.handleTextDocumentDidChange(
-			ctx,
-			request,
-		)
+		l.documents.Set(request.Params.TextDocument.URI, string(request.Params.ContentChanges[0].Text))
+		return nil, nil
 
 	default:
 		return nil, fmt.Errorf("unknown method: %s", msg.Method)
@@ -281,26 +280,6 @@ func (l *lspHandler) handleOpenDocument(
 		return nil, nil
 	}
 	l.documents.Set(request.Params.TextDocument.URI, string(request.Params.TextDocument.Text))
-	return nil, nil
-}
-
-//
-
-func (l *lspHandler) handleTextDocumentDidChange(
-	_ context.Context,
-	request lsp.TextDocumentDidChangeNotification,
-) (rpc.MethodActor, error) {
-	l.documents.Set(request.Params.TextDocument.URI, string(request.Params.ContentChanges[0].Text))
-	return nil, nil
-}
-
-//
-
-func (l *lspHandler) handleTextDocumentDidClose(
-	_ context.Context,
-	request lsp.DidCloseTextDocumentParamsNotification,
-) (rpc.MethodActor, error) {
-	l.documents.Delete(request.Params.TextDocument.URI)
 	return nil, nil
 }
 
