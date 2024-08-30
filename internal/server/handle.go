@@ -62,19 +62,22 @@ func (l *lspHandler) Handle(
 
 func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.MethodActor, error) {
 	switch methods.Method(msg.Method) {
+
 	case methods.MethodInitialize:
 		var request lsp.InitializeRequest
 		err := json.Unmarshal([]byte(msg.Content), &request)
 		if err != nil {
-			return nil, fmt.Errorf("decode initialize request (initialize) failed: %w", err)
+			return nil, fmt.Errorf("decode (%s) failed: %w", msg.Method, err)
 		}
 		return l.handleInitialize(ctx, request)
+
 	case methods.MethodRequestTextDocumentDidOpen:
 		var request lsp.NotificationDidOpenTextDocument
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (textDocument/didOpen) request failed: %w",
+				"decode (%s) request failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -88,7 +91,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to unmarshal definition request (textDocument/definition): %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -96,12 +100,14 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 			ctx,
 			request,
 		)
+
 	case methods.MethodRequestTextDocumentCompletion:
 		var request lsp.TextDocumentCompletionRequest
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to unmarshal completion request (textDocument/completion): %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -115,7 +121,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed unmarshal of hover request (): %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -129,7 +136,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to unmarshal of codeAction request (textDocument/codeAction): %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -143,7 +151,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal([]byte(msg.Content), &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (shutdown) request failed: %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -157,7 +166,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to unmarshal cancel request ($/cancelRequest): %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -183,7 +193,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal([]byte(msg.Content), &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (initialized) request failed: %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -204,7 +215,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal([]byte(msg.Content), &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (didSave) request failed: %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -220,7 +232,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal([]byte(msg.Content), &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (didClose) request failed: %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
@@ -231,7 +244,8 @@ func (l *lspHandler) handle(ctx context.Context, msg *rpc.BaseMessage) (rpc.Meth
 		err := json.Unmarshal(msg.Content, &request)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"decode (textDocument/didChange) request failed: %w",
+				"decode (%s) failed: %w",
+				msg.Method,
 				err,
 			)
 		}
